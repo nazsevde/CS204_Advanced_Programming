@@ -1,0 +1,188 @@
+#include <iostream>
+#include <string>
+#include<sstream>
+#include<fstream>
+#include <vector>
+
+using namespace std;
+
+vector<vector<char>> readMatrixFromFile(string filename){
+    ifstream input;
+    input.open(filename);
+
+    while (input.fail()) {
+        cout << endl << "Could not open the file. Please enter a valid file name: ";
+        cin >> filename;
+        input.open(filename);
+    }
+/*
+    vector<vector<char>> matrix;
+    string line;
+    //cout << endl << "The matrix file contains:" << endl;
+    while (getline(input, line)) {
+        vector<char> row(line.begin(), line.end());
+        matrix.push_back(row);
+        //cout << line << endl;
+    }
+*/
+    vector<vector<char>> matrix;
+    //  ifstream input(filename);
+
+    while (!input.eof()) {
+        string line;
+        getline(input, line);
+
+        if (line.length() > 0) {
+            vector<char> row(line.begin(), line.end());
+            matrix.push_back(row);
+        }
+    }
+    input.close();
+    return matrix;
+}
+
+
+bool placeStars(vector<vector<char>> &matrix, int row, int col, int num, int& count) {
+    bool canPlace = true;
+    int currRow = row;
+    int currCol = col;
+
+    for (int i = 0; i < num; i++) {
+        if (currRow >= matrix.size() || currCol >= matrix[currRow].size() || matrix[currRow][currCol] != '-') {
+            canPlace = false;
+            break;
+        }
+        currCol++;
+    }
+
+    if (canPlace) {
+        currCol = col;
+        for (int i = 0; i < num; i++) {
+            if (matrix[currRow][currCol] != '#') {
+                matrix[currRow][currCol] = '*';
+            }
+            else{
+                canPlace = false;
+                break;
+            }
+            currCol++;
+        }
+        if (canPlace) {
+            count++;
+        }
+    }
+
+    return canPlace;
+}
+
+void printMatrix(vector<vector<char>> matrix) {
+    for (vector<char> row: matrix) {
+        for (char c: row) {
+            cout << c;
+        }
+        cout << endl;
+    }
+}
+
+void findPlacements(vector<vector<char>> &matrix, string query) {
+    int row = 0;
+    int col = 0;
+    int count = 0;
+    bool validInput = true;
+    vector<vector<char>> original = matrix;
+
+    for (int i = 0; i < query.length(); i++) {
+        if (query[i] == '/') {
+            row++;
+            col = 0;
+        }
+        else if (query[i] == 'b') {
+            //int a = query[i - 1] - '0';
+            //col += a;
+            //col++;
+            col += query[i - 1] - '0';
+        }
+        else if (query[i] == 's') {
+            int num = query[i - 1] - '0';
+            if (!placeStars(matrix, row, col, num, count)) {
+                cout << "No placements found." << endl;
+                validInput = false;
+                matrix = original;
+                break;
+            }
+            col += num;
+        }
+
+    }
+    if(query == "Quit"){
+        return;;
+    }
+
+    if (validInput) {
+        cout << "Placement number 1:"<< endl;
+        for (int r = 0; r < matrix.size(); r++) {
+            for (int c = 0; c < matrix[r].size(); c++) {
+                if (matrix[r][c] == '*') {
+                    cout << "(" << r << "," << c << ") ";
+                    if(r > matrix.size()){
+                                    break;
+                                }
+                }
+            }
+        }
+        
+        
+
+        
+        cout << endl;
+        matrix = original;
+    }
+}
+
+void inputFormatControl(vector<vector<char>> matrix) {
+    bool error = false;
+    for ( vector<char> row: matrix) {
+        if (row.size() != matrix[0].size()) {
+            cout << endl << "Erroneous file content. Program terminates." << endl;
+            error = true;
+            break;
+        }
+
+        for (char c: row) {
+            if (c != '-' && c != '#') {
+                cout << endl << "Erroneous file content. Program terminates." << endl;
+                error = true;
+                break;
+            }
+        }
+        if (error) {
+            break;
+        }
+    }
+
+    if (!error) {
+        cout << endl << "The matrix file contains:" << endl;
+        printMatrix(matrix);
+
+        string query;
+        bool validInput = true;
+        
+        while(query != "Quit"){
+            cout << "Enter the string query for a shape, or \"Quit\" to terminate the program:" << endl;
+            cin >> query;
+            findPlacements(matrix, query);
+        }
+        
+    }
+}
+
+int main() {
+    string filename;
+    cout << "Please enter the file name: ";
+    cin >> filename;
+
+    vector<vector<char>> matrix = readMatrixFromFile(filename);
+    inputFormatControl(matrix);
+    return 0;
+}
+
